@@ -5,7 +5,9 @@ from datetime import datetime
 
 # --- KONFIGURACJA ---
 # TUTAJ PODMIEN WARTOSCI NA SWOJE
-API_KEY = "JTQ72WJ-H6Z44CN-NJ194P9-235S88M"
+API_KEY = os.getenv("ANYTHINGLLM_API_KEY")
+if not API_KEY:
+    raise ValueError("Missing ANYTHINGLLM_API_KEY environment variable.")
 WORKSPACE_SLUG = "risk-policy-analyzer"  # Zmień na swój slug z przeglądarki
 BASE_URL = "http://127.0.0.1:3001"  # Domyślny adres AnythingLLM
 
