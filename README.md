@@ -19,8 +19,9 @@ Initial testing via a standard graphical UI chat interface exposed a critical op
 This tool operates strictly under a "Human-in-the-Loop" (HITL) governance model. The AI does not make final compliance decisions; it functions as a high-speed triage assistant. It generates an Exception Report highlighting specific deviations (e.g., 60 vs. 90-day password rotation), which a human Risk Analyst must then review and validate. While the model excels at semantic text extraction, it is not trusted with quantitative logic or absolute decision-making without expert oversight.
 
 ## 6. How to run (For technical review)
-1. Ensure Ollama is running `llama3.1:8b` locally.
-2. Setup an AnythingLLM Workspace and upload the provided `.txt` files located in `/data`.
-3. Generate an API Key in AnythingLLM and update the `API_KEY` variable in `src/evaluator.py`.
-4. Run `python src/evaluator.py` to trigger the automated gap analysis via API.
-5. Run `python src/analyzer.py` to query the SQLite database and evaluate the pipeline's extraction accuracy.
+1. Install dependencies: `pip install -r requirements.txt`.
+2. Ensure Ollama is running `llama3.1:8b` locally.
+3. Setup an AnythingLLM Workspace (`risk-policy-analyzer`) and upload the provided `.md` files located in `/Data`.
+4. Generate an API Key in AnythingLLM and set it as the `ANYTHINGLLM_API_KEY` environment variable.
+5. Run `python SRC/Evaluator.py` to trigger the automated gap analysis via API.
+6. Run `python SRC/Analyzer.py` to query the SQLite database (`risk_evaluation.db`) and evaluate the pipeline's extraction accuracy.
