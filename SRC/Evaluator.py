@@ -1,29 +1,29 @@
-import requests
+import os
 import sqlite3
-import json
 from datetime import datetime
+import requests
 
-# --- KONFIGURACJA ---
-# TUTAJ PODMIEN WARTOSCI NA SWOJE
+# --- CONFIGURATION ---
 API_KEY = os.getenv("ANYTHINGLLM_API_KEY")
 if not API_KEY:
     raise ValueError("Missing ANYTHINGLLM_API_KEY environment variable.")
-WORKSPACE_SLUG = "risk-policy-analyzer"  # Zmień na swój slug z przeglądarki
-BASE_URL = "http://127.0.0.1:3001"  # Domyślny adres AnythingLLM
 
-# Endpoint POST do wysłania wiadomości (zgodnie ze zrzutem z dokumentacji)
+WORKSPACE_SLUG = "risk-policy-analyzer"
+BASE_URL = "http://127.0.0.1:3001"  # Default local AnythingLLM address
+
+# POST endpoint for sending a chat/query message to a workspace
 CHAT_ENDPOINT = f"{BASE_URL}/api/v1/workspace/{WORKSPACE_SLUG}/chat"
 
-# --- ZAPYTANIE (PROMPT) ---
+# --- EVALUATION PROMPT ---
 TEST_PROMPT = """Analyze the Local Branch SOP against the Group ICT Security Policy. 
 List all non-compliance issues regarding Passwords, Backups, and Incident Reporting."""
 
 
 def init_db():
-    """Tworzy lokalną bazę SQLite i tabelę do zapisywania wyników ewaluacji."""
-    conn = sqlite3.connect('risk_evaluation.db')
+    """Creates a local SQLite database and table to store evaluation runs."""
+    conn = sqlite3.connect("risk_evaluation.db")
     cursor = conn.cursor()
-    cursor.execute('''
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS evaluation_runs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             timestamp TEXT,
@@ -31,72 +31,70 @@ def init_db():
             model_response TEXT,
             sources_used INTEGER
         )
-    ''')
+    """)
     conn.commit()
     return conn
 
 
 def send_chat_to_anythingllm(prompt):
-    """Wysyła zapytanie do API AnythingLLM używając metody POST."""
+    """Sends a prompt to the AnythingLLM API using HTTP POST."""
     headers = {
         "Authorization": f"Bearer {API_KEY}",
         "Content-Type": "application/json",
-        "Accept": "application/json"
+        "Accept": "application/json",
     }
 
-    # Body (payload) zgodnie z wymogami API AnythingLLM dla POST /chat
+    # Payload configured in 'query' mode for stateless, isolated audit runs
     payload = {
         "message": prompt,
-        "mode": "query"  # Zmienione na query dla izolowanych, audytowych zapytań
+        "mode": "query",
     }
 
-    print(f"Wysyłam zapytanie do {CHAT_ENDPOINT}...")
+    print(f"Sending request to {CHAT_ENDPOINT}...")
     try:
         response = requests.post(CHAT_ENDPOINT, headers=headers, json=payload)
-        response.raise_for_status()  # Wyrzuci błąd jeśli status to np. 400 lub 500
+        response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:
-        print(f"Błąd połączenia z API: {e}")
+        print(f"API connection error: {e}")
         return None
 
 
 def save_result_to_db(conn, prompt, api_response):
-    """Parsuje odpowiedź z API i zapisuje ją do bazy danych."""
+    """Parses the API response and stores the result in SQLite."""
     if not api_response:
-        print("Brak odpowiedzi do zapisania.")
+        print("No response to save.")
         return
 
-    # Wyciąganie kluczowych danych z JSONa zwróconego przez AnythingLLM
-    # Dokładna struktura zależy od wersji API, zazwyczaj tekst jest w 'textResponse'
-    model_text = api_response.get("textResponse", "Brak tekstu w odpowiedzi")
-
-    # Zliczamy, ilu fragmentów kontekstu (chunks) użył system
+    model_text = api_response.get("textResponse", "No text returned in response")
     sources_count = len(api_response.get("sources", []))
-
     timestamp = datetime.now().isoformat()
 
     cursor = conn.cursor()
-    cursor.execute('''
+    cursor.execute(
+        """
         INSERT INTO evaluation_runs (timestamp, prompt, model_response, sources_used)
         VALUES (?, ?, ?, ?)
-    ''', (timestamp, prompt, model_text, sources_count))
+        """,
+        (timestamp, prompt, model_text, sources_count),
+    )
 
     conn.commit()
-    print("Wynik zapisany w bazie SQLite (risk_evaluation.db).")
+    print("Result saved to SQLite database (risk_evaluation.db).")
 
 
 def main():
-    # 1. Inicjalizacja bazy
+    # 1. Initialize database
     db_conn = init_db()
 
-    # 2. Strzał do API
+    # 2. Query the API
     result = send_chat_to_anythingllm(TEST_PROMPT)
 
-    # 3. Zapis do bazy
+    # 3. Save results
     if result:
-        print("\nOtrzymano odpowiedź z modelu.")
+        print("\nModel response received.")
         print("-" * 40)
-        # Opcjonalne wypisanie kawałka odpowiedzi dla weryfikacji w konsoli
+        # Print a short preview for console verification
         print(result.get("textResponse", "")[:200] + "...\n")
         print("-" * 40)
 

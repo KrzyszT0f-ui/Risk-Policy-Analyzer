@@ -2,11 +2,10 @@ import sqlite3
 
 
 def analyze_db():
-    # Połączenie z naszą bazą testową
-    conn = sqlite3.connect('risk_evaluation.db')
+    """Queries the SQLite database and runs a basic quality check on model outputs."""
+    conn = sqlite3.connect("risk_evaluation.db")
     cursor = conn.cursor()
 
-    # Zapytanie SQL wyciągające wyniki od najnowszego testu
     query = """
         SELECT 
             id, 
@@ -20,21 +19,21 @@ def analyze_db():
     cursor.execute(query)
     rows = cursor.fetchall()
 
-    print(f"Znaleziono {len(rows)} testów w bazie.\n")
+    print(f"Found {len(rows)} evaluation run(s) in the database.\n")
 
     for row in rows:
         run_id, timestamp, sources, response = row
-        print(f"--- TEST ID: {run_id} ---")
-        print(f"Liczba pobranych fragmentów z wektorowej bazy wiedzy (chunks): {sources}")
+        print(f"--- TEST ID: {run_id} | TIMESTAMP: {timestamp} ---")
+        print(f"Retrieved context chunks from vector DB: {sources}")
 
-        # Automatyczna weryfikacja biznesowa - sprawdzamy, czy model wyłapał regułę 24 godzin
-        print("STATUS KONTROLI JAKOŚCI (INCIDENT REPORTING):")
+        # Automated sanity check: verify if the model captured the 24-hour reporting rule
+        print("QUALITY CHECK STATUS (INCIDENT REPORTING):")
         if "24" in response:
-            print("[OK] Model wspomniał o regule 24 godzin. Należy przeczytać, czy wyciągnął właściwy wniosek.")
+            print("[PASS] Model referenced the 24-hour rule. Manual review required to verify reasoning.")
         else:
-            print("[BŁĄD] Model całkowicie zgubił fakt o 24 godzinach z lokalnej procedury (Ślepowidz/Halucynacja).")
+            print("[FAIL] Model missed the 24-hour reporting rule from the local SOP (potential retrieval miss or hallucination).")
 
-        print("\nPEŁNA ODPOWIEDŹ MODELU:")
+        print("\nFULL MODEL RESPONSE:")
         print(response)
         print("=" * 80)
 
