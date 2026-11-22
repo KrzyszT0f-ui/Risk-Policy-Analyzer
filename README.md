@@ -1,27 +1,56 @@
-# AI-Driven Risk Policy & SOP Gap Analyzer
+# Porter's Five Forces Timeline Engine
 
-## 1. Business Problem
-Risk analysts and financial controllers spend countless hours manually cross-referencing local branch Standard Operating Procedures (SOPs) against overarching Group ICT Policies (e.g., DORA, EBA Guidelines). This manual mapping is labor-intensive, scales poorly during post-merger integrations, and is highly susceptible to human fatigue, resulting in critical compliance gaps being overlooked.
+**Live Application:** https://porter-timeline.vercel.app
 
-## 2. The Solution (PoC)
-This Proof of Concept (PoC) is a Retrieval-Augmented Generation (RAG) pipeline designed to automate the detection of procedural deviations. To strictly adhere to Data Privacy, banking secrecy, and GDPR constraints, the solution executes entirely on-premise using a locally hosted Large Language Model (Llama 3.1 8B). Zero data leaves the local environment, ensuring that sensitive internal banking procedures are never exposed to public cloud APIs.
+An interactive, multi-company strategic analysis web application (PWA) designed to visualize how competitive dynamics and industry moats evolve over multi-decade financial trajectories.
 
-## 3. Architecture & Tech Stack
-- **Engine:** AnythingLLM (Vector DB) + Ollama
-- **LLM:** Llama 3.1 (8B) - 100% on-premise execution
-- **Automation:** Python (REST API integration)
-- **Evaluation:** SQLite & native SQL queries
+---
 
-## 4. Why API over UI? (Key Finding)
-Initial testing via a standard graphical UI chat interface exposed a critical operational risk: stateful conversation memory and hidden UI parameters caused the model to drop explicit facts (e.g., overlooking a 24-hour incident reporting SLA). By migrating the evaluation to a Python-driven API using stateless, isolated queries (`mode="query"`), the model's extraction accuracy stabilized completely. This proves that programmatic, stateless execution is mandatory for predictable and auditable risk management workflows.
+## Core Capabilities
 
-## 5. Human-in-the-Loop & Limitations
-This tool operates strictly under a "Human-in-the-Loop" (HITL) governance model. The AI does not make final compliance decisions; it functions as a high-speed triage assistant. It generates an Exception Report highlighting specific deviations (e.g., 60 vs. 90-day password rotation), which a human Risk Analyst must then review and validate. While the model excels at semantic text extraction, it is not trusted with quantitative logic or absolute decision-making without expert oversight.
+* **Multi-Company Portfolio & Dynamic Brand Theming:** Switch seamlessly between **NVIDIA (NVDA)**, **Spotify (SPOT)**, and **Ryanair (RYA / RYAAY)**, with real-time CSS variable injection matching each company's corporate visual identity.
+* **Full Bilingual Localization (PL / EN):** Instant switching between Polish and English across both UI controls and all multi-decade historical datasets, KPIs, and strategic rationales.
+* **Historical Timeline Scrubbing:** Navigate through distinct strategic eras (up to 2026) to observe structural shifts in competitive positioning alongside annual financial KPIs (revenue, gross margin, operating margin, net income, R&D / operational metrics).
+* **Dynamic Five Forces Radar:** Interactive SVG pentagon chart scoring Competitive Rivalry, Supplier Power, Buyer Power, Threat of Substitution, and Threat of New Entry on a 1–5 scale, paired with historical rationale for each selected year.
+* **Year-over-Year Strategic Comparison:** Overlay any two historical periods on the radar chart to quantify structural moat expansion or compression.
+* **Financial & Segment Breakdown:** Multi-decade revenue trajectory chart supporting both linear and logarithmic scales, combined with revenue mix breakdowns by business segment.
+* **Offline-First Progressive Web App (PWA):** Installable as a standalone application on desktop (Windows/macOS) and mobile devices (Android/iOS) with local service worker caching.
 
-## 6. How to run (For technical review)
-1. Install dependencies: `pip install -r requirements.txt`.
-2. Ensure Ollama is running `llama3.1:8b` locally.
-3. Setup an AnythingLLM Workspace (`risk-policy-analyzer`) and upload the provided `.md` files located in `/Data`.
-4. Generate an API Key in AnythingLLM and set it as the `ANYTHINGLLM_API_KEY` environment variable.
-5. Run `python SRC/Evaluator.py` to trigger the automated gap analysis via API.
-6. Run `python SRC/Analyzer.py` to query the SQLite database (`risk_evaluation.db`) and evaluate the pipeline's extraction accuracy.
+---
+
+## Architecture & Extensibility
+
+The engine decouples UI visualization from company datasets through a modular registry pattern:
+
+* `src/data/companies/nvda.json` – NVIDIA Corporation dataset (1993–2026)
+* `src/data/companies/spot.json` – Spotify Technology S.A. dataset (2014–2026)
+* `src/data/companies/rya.json` – Ryanair Holdings plc dataset
+* `src/data/registry.js` – Central company index and selector binding
+* `src/i18n/translations.js` – Bilingual dictionary and `pickLang` localization helper
+* `src/App.jsx` – Core state management, dynamic theme engine, radar visualization, and comparison engine
+
+To add a new company, create a corresponding bilingual JSON file in `src/data/companies/` (including its `theme` palette) and register it in `src/data/registry.js`.
+
+---
+
+## Tech Stack
+
+* **Frontend:** React, Vite 8, Tailwind CSS
+* **Icons & Visualization:** Custom SVG rendering, `lucide-react`
+* **PWA & Deployment:** `vite-plugin-pwa` (Workbox), Vercel CI/CD
+
+---
+
+## Local Development
+
+1. Clone the repository: `git clone https://github.com/KrzyszT0f-ui/porter-timeline.git`
+2. Enter the directory: `cd porter-timeline`
+3. Install dependencies: `npm install`
+4. Start development server: `npm run dev`
+5. Build production bundle: `npm run build`
+
+---
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
