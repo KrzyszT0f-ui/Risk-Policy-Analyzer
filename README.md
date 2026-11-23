@@ -1,56 +1,65 @@
 # Porter's Five Forces Timeline Engine
 
-**Live Application:** https://porter-timeline.vercel.app
+An interactive, bilingual (**EN / PL**) Progressive Web App (PWA) for multi-decade competitive strategy and financial trajectory analysis, powered by an **in-browser Edge AI analyst (WebGPU + WebLLM)**.
 
-An interactive, multi-company strategic analysis web application (PWA) designed to visualize how competitive dynamics and industry moats evolve over multi-decade financial trajectories.
-
----
-
-## Core Capabilities
-
-* **Multi-Company Portfolio & Dynamic Brand Theming:** Switch seamlessly between **NVIDIA (NVDA)**, **Spotify (SPOT)**, and **Ryanair (RYA / RYAAY)**, with real-time CSS variable injection matching each company's corporate visual identity.
-* **Full Bilingual Localization (PL / EN):** Instant switching between Polish and English across both UI controls and all multi-decade historical datasets, KPIs, and strategic rationales.
-* **Historical Timeline Scrubbing:** Navigate through distinct strategic eras (up to 2026) to observe structural shifts in competitive positioning alongside annual financial KPIs (revenue, gross margin, operating margin, net income, R&D / operational metrics).
-* **Dynamic Five Forces Radar:** Interactive SVG pentagon chart scoring Competitive Rivalry, Supplier Power, Buyer Power, Threat of Substitution, and Threat of New Entry on a 1–5 scale, paired with historical rationale for each selected year.
-* **Year-over-Year Strategic Comparison:** Overlay any two historical periods on the radar chart to quantify structural moat expansion or compression.
-* **Financial & Segment Breakdown:** Multi-decade revenue trajectory chart supporting both linear and logarithmic scales, combined with revenue mix breakdowns by business segment.
-* **Offline-First Progressive Web App (PWA):** Installable as a standalone application on desktop (Windows/macOS) and mobile devices (Android/iOS) with local service worker caching.
+**Live Demo:** [porter-timeline.vercel.app](https://porter-timeline.vercel.app)
 
 ---
 
-## Architecture & Extensibility
+## Why This Project Exists
 
-The engine decouples UI visualization from company datasets through a modular registry pattern:
+Most strategy frameworks are presented as static snapshots, while most AI wrappers suffer from recurring API costs, data privacy trade-offs, and numerical hallucinations. 
 
-* `src/data/companies/nvda.json` – NVIDIA Corporation dataset (1993–2026)
-* `src/data/companies/spot.json` – Spotify Technology S.A. dataset (2014–2026)
-* `src/data/companies/rya.json` – Ryanair Holdings plc dataset
-* `src/data/registry.js` – Central company index and selector binding
-* `src/i18n/translations.js` – Bilingual dictionary and `pickLang` localization helper
-* `src/App.jsx` – Core state management, dynamic theme engine, radar visualization, and comparison engine
+This engine bridges **corporate financial analysis** and **client-side AI engineering**:
+1. **Longitudinal Strategic Tracking:** Maps up to 30+ years of historical financial KPIs alongside year-by-year **Porter's Five Forces** scoring (`1–5`), segment breakdowns, and strategic catalysts derived from primary SEC filings (Form 10-K / 20-F) and annual reports.
+2. **Zero-Cost Edge AI Analyst:** Runs a quantized **Qwen 2.5 3B Instruct** model (`q4f16_1-MLC`) directly on the user's GPU inside a dedicated Web Worker—requiring zero backend servers, zero API keys, and zero inference fees.
 
-To add a new company, create a corresponding bilingual JSON file in `src/data/companies/` (including its `theme` palette) and register it in `src/data/registry.js`.
+---
+
+## Covered Companies & Datasets
+
+Each company dataset is structured in a modular JSON registry (`src/data/companies/`) with custom brand theming and full Polish/English localization:
+
+| Ticker | Company | Coverage | Key Strategic Arcs |
+| :--- | :--- | :--- | :--- |
+| **NVDA** | NVIDIA Corporation | **1995 – FY2027 YTD** (33 periods) | Pre-IPO multimedia chips → GeForce 256 & Xbox → ATI duopoly & nForce → CUDA & Tegra pivot → Deep Learning inflection (Pascal/Volta) → Generative AI & Blackwell/Rubin full-stack dominance. |
+| **RYA / RYAAY** | Ryanair Holdings plc | **1997 – FY2026** (30 years) | Dublin/NASDAQ IPO → Post-9/11 & EU deregulation expansion → Fuel hedging & ancillary unbundling → COVID-19 grounding trough (`FY2021`) → Post-pandemic fare & load factor recovery (`94%`). |
+| **SPOT** | Spotify Technology S.A. | **2014 – 2026** (13 years) | Pre-IPO hypergrowth & label supplier power (`5/5`) → Direct Listing (`2018`) → Podcast/audiobook diversification → Margin inflection & first full-year operating profit (`2024–2026`). |
+
+---
+
+## Key Features
+
+* **Interactive Timeline & Radar Comparison:** Scrub across decades with synchronized SVG revenue trajectories (Log & Linear scales), segment mix bars, and an overlaid 5-axis radar chart comparing any two historical years side-by-side.
+* **Hybrid Edge AI Chat (`ChatWidget.jsx`):**
+  * **Hardware Detection & Explicit Consent:** Automatically probes `navigator.gpu` and `navigator.deviceMemory`. Desktop WebGPU users receive an explicit opt-in prompt before caching the ~1.9 GB model weights in the browser's Cache API.
+  * **Graceful Fallback:** On mobile devices or browsers without WebGPU support, the widget degrades cleanly into a one-click structured prompt exporter for external LLMs.
+  * **Deterministic Context Injection:** Instead of feeding an entire 30-year JSON file into a small context window (which degrades 3B model accuracy), a regex parser extracts specific years mentioned in the user's query and injects only the matching periods plus active slider selections at `temperature: 0.01`.
+* **Dynamic Brand Theming & Full i18n:** Switching companies dynamically updates CSS custom properties (`--accent`, `--bg-main`, `--bg-card`) and resets chat context to prevent cross-company data bleed.
+* **Offline-Ready PWA:** Configured with `vite-plugin-pwa` and custom Workbox `globIgnores` so the core application precaches in ~520 KiB while heavy WebLLM runtime chunks load lazily on demand.
 
 ---
 
 ## Tech Stack
 
-* **Frontend:** React, Vite 8, Tailwind CSS
-* **Icons & Visualization:** Custom SVG rendering, `lucide-react`
-* **PWA & Deployment:** `vite-plugin-pwa` (Workbox), Vercel CI/CD
+* **Frontend:** React 19, Vite, Tailwind CSS (`@tailwindcss/vite`), Lucide Icons
+* **In-Browser AI:** `@mlc-ai/web-llm` (`Qwen2.5-3B-Instruct-q4f16_1-MLC`), WebGPU, Web Workers (`llm.worker.js`), Browser Cache API
+* **PWA & Deployment:** `vite-plugin-pwa` (Workbox), Vercel CI/CD via GitHub
 
 ---
 
-## Local Development
+## Local Setup
 
-1. Clone the repository: `git clone https://github.com/KrzyszT0f-ui/porter-timeline.git`
-2. Enter the directory: `cd porter-timeline`
-3. Install dependencies: `npm install`
-4. Start development server: `npm run dev`
-5. Build production bundle: `npm run build`
+```bash
+# 1. Clone the repository
+git clone https://github.com/KrzyszT0f-ui/porter-timeline.git
+cd porter-timeline
 
----
+# 2. Install dependencies
+npm install
 
-## License
+# 3. Start local development server
+npm run dev
 
-This project is licensed under the [MIT License](LICENSE).
+# 4. Build production bundle
+npm run build
